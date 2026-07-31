@@ -113,6 +113,33 @@ get real typographic hierarchy, and they're far more reliable than embedded newl
 **Small print works** — genuinely small, multi-word lines render legibly. This is the single
 biggest gap between Ideogram 4 and every other open model, so it's worth leaning on.
 
+## Spatial relationships between elements need to be concrete too
+
+`bbox` places things. It does not describe how two elements *relate*, and this is where captions
+quietly fail.
+
+I asked for "a small orange silhouette of a front-crawl swimmer, angled, overlapping the enclosed
+counter of the letter O". Across two seeds the text rendered perfectly every time and the swimmer
+came out as an orange bird beside the word. The model had no trouble with the typography — it had
+trouble with "the enclosed counter of the letter O", which is a relationship, not a thing.
+
+Rewriting the same element as a self-contained description — pose spelled out limb by limb, its own
+bbox in clear space, and an explicit statement of what surrounds it — fixed it:
+
+```
+"a small solid orange silhouette of a single swimmer seen directly from above, face down, one arm
+ reaching forward over the head and the other trailing back along the body, legs straight behind,
+ surrounded by empty flat blue with no water and no other objects"
+```
+
+**The general rule: describe each element as if it were alone in the frame, and let `bbox` do the
+positioning.** If you catch yourself writing "overlapping", "behind the", "tucked into" — that
+phrase is doing work the model won't reliably do.
+
+**And know which failure you're looking at.** A seed ladder rescues refusals and composition luck.
+It will not rescue an underspecified `desc` — you'll just pay for the same mistake at a new seed.
+If every seed fails the *same way*, stop laddering and rewrite the element.
+
 ## Concrete beats generic — this is also a refusal fix
 
 Filler prose is out-of-distribution. Phrases like "a polished professional setting" or "a

@@ -11,7 +11,13 @@ Every example here is a straight render — no upscaler, no retouching, no compo
 
 ## Examples
 
-<!-- EXAMPLES -->
+
+| | |
+|---|---|
+| ![magazine_cover](examples/magazine_cover.png) | ![travel_poster](examples/travel_poster.png) |
+| ![neon_signage](examples/neon_signage.png) | ![packaging](examples/packaging.png) |
+| ![chalkboard_menu](examples/chalkboard_menu.png) | ![swiss_type](examples/swiss_type.png) |
+
 
 ## What this adds over the official template
 
@@ -34,8 +40,12 @@ What it doesn't give you:
 
 | File | What it's for |
 |---|---|
-| `Ideogram4_Mac.json` | Single render, **V4_DEFAULT_20** at 1024×1024. |
-| `Ideogram4_Mac_Seedhunt.json` | Seed scan, **V4_TURBO_12**. Seed set to `increment` — set a batch count in the queue and walk away. |
+| `Ideogram4_Mac.json` | Single render, **V4_DEFAULT_20** at 1088×1920 (~8 min). |
+| `Ideogram4_Mac_Seedhunt.json` | Seed scan, **V4_TURBO_12** at the same 1088×1920 (~5 min each). Seed set to `increment` — set a batch count in the queue and walk away. |
+
+Both ship with the caption that produced the Dolomiti poster below, so queueing either one
+unmodified reproduces a known-good result before you start changing things. Drop both to 1024×1024
+if you want roughly half the render time.
 
 Both carry two in-graph panels — model downloads with direct links and install paths, and a
 recipe/gotchas panel — so you don't need this README open while you work.
@@ -72,9 +82,14 @@ and sun — with Default 20 differing only in refinement: cleaner letterforms an
 intended loop is scan cheaply at Turbo 12, then re-render the seed you liked at Default 20 or
 Quality 48.
 
-**Caveat, stated plainly: that's one caption and one seed.** I haven't swept it, so treat it as a
-strong working assumption rather than a guarantee — and eyeball your final against the scan rather
-than assuming they match.
+**Caveat, and a real limit.** That was one caption at one seed. Rendering the magazine cover below at
+both Default 20 and Quality 48 on the same seed shows the *layout* holding exactly — masthead,
+headline, deck, cover line and footer all identical — while the subject's fine pose shifts slightly
+between them. Note those two presets share `mu` and differ in `std`, so preset changes are not free.
+
+So the honest version: **treat composition as stable enough to pick a seed by, but expect fine
+detail to move.** Great for choosing a layout, not a guarantee that your keeper is pixel-identical to
+the scan. Eyeball the final rather than assuming.
 
 **The resolution must not change between those two steps.** Latent shape determines the noise
 tensor, so the same seed at a different size is a different image. Both shipped workflows therefore
@@ -165,7 +180,7 @@ warm — and paid on *every* render under `--disable-smart-memory`, which domina
 compositions with the seedhunt workflow, then spend Quality 48 only on a seed you already want.
 
 **Memory — this is the tight part.** Across a 14-render batch at 1088×1920 with `--lowvram`, peak
-device memory ranged **36.8 to 44.1 GB of 48 GB**, including a ~14 GB baseline from macOS and other
+device memory ranged **36.8 to 44.4 GB of 48 GB**, including a ~14 GB baseline from macOS and other
 apps. At the top of that range there were under 4 GB free. It completed every time, but that is not
 much margin, and it's the reason I'd treat ~2 MP as a sensible ceiling rather than a starting point.
 
