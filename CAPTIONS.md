@@ -104,9 +104,13 @@ don't put styling hints inside `text` — `text` is rendered literally.
 capitals, tightly letterspaced" works. Naming a specific font is unreliable and naming a foundry's
 font gets you an approximation at best.
 
-**Give every text block its own element.** A masthead, a headline, a deck and a footer are four
-elements with four bboxes, not one block of text with line breaks. Separate elements are how you
-get real typographic hierarchy, and they're far more reliable than embedded newlines.
+**Give every text block its own element — one per typographic level.** A masthead, a headline, a
+deck and a footer are four elements with four bboxes. That's how you get real hierarchy: each gets
+its own size, weight, colour and position.
+
+Embedded newlines *do* work **within** one element — `"ROASTED IN\nSMALL BATCHES"` on the packaging
+example renders correctly as two centred lines. Use them for a single block that happens to wrap.
+Just don't use them to fake hierarchy, because everything in one element shares one styling.
 
 **Say the colour and the alignment.** Unspecified type drifts toward centred black.
 
