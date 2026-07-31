@@ -1,0 +1,1072 @@
+{
+  "last_node_id": 18,
+  "last_link_id": 17,
+  "nodes": [
+    {
+      "id": 17,
+      "type": "MarkdownNote",
+      "pos": [
+        -1040,
+        80
+      ],
+      "size": [
+        460,
+        1000
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## MODELS TO DOWNLOAD\n\nAll files are from **Comfy-Org/Ideogram-4**.\n\n### Conditional diffusion model\n[\u2b07 ideogram4_fp8_scaled.safetensors \u00b7 9.28 GB](https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors)\n\nInstall to: ComfyUI/models/diffusion_models/\n\n### Unconditional diffusion model\n[\u2b07 ideogram4_unconditional_fp8_scaled.safetensors \u00b7 9.28 GB](https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors)\n\nInstall to: ComfyUI/models/diffusion_models/\n\n### Text encoder\n[\u2b07 qwen3vl_8b_fp8_scaled.safetensors \u00b7 10.59 GB](https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/text_encoders/qwen3vl_8b_fp8_scaled.safetensors)\n\nInstall to: ComfyUI/models/text_encoders/\n\n### VAE\n[\u2b07 flux2-vae.safetensors \u00b7 0.34 GB](https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/vae/flux2-vae.safetensors)\n\nInstall to: ComfyUI/models/vae/\n\nAfter placing the files, restart ComfyUI or refresh model lists with **R**.\n\n**Workflow graph:** 100% ComfyUI core nodes.\n\n**Apple Silicon runtime requirement:** [ComfyUI-AppleSilicon-FP8](https://github.com/pawel-mazurkiewicz/ComfyUI-AppleSilicon-FP8) plus **torch 2.11+**. See panel B for why."
+      ],
+      "title": "Models & downloads",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 18,
+      "type": "MarkdownNote",
+      "pos": [
+        -540,
+        80
+      ],
+      "size": [
+        500,
+        1000
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## RECIPE & MAC GOTCHAS\n\n**Official recipe:** euler \u00b7 Ideogram4Scheduler \u00b7 DualModelGuider cfg 7 \u00b7 CFGOverride 3.0 @ 0.7-1.0\n\n**Official presets:**\n- V4_QUALITY_48: steps 48, mu 0.0, std 1.50\n- V4_DEFAULT_20: steps 20, mu 0.0, std 1.75\n- V4_TURBO_12: steps 12, mu 0.5, std 1.75\n\nIdeogram states Quality 48 is its default. This workflow ships Default 20 as the practical Apple Silicon tier.\n\n**Dimensions:** change Ideogram4Scheduler width and height together with EmptyFlux2LatentImage. Dimensions must be multiples of 16. The official template snaps them with `max(((a + 15) // 16) * 16, 256)`.\n\n**fp8 is mandatory on Mac, not optional.** Comfy-Org ships Ideogram 4 only as fp8_scaled, int8_convrot and nvfp4. int8_convrot needs CUDA-only kernels; nvfp4 is an NVIDIA Blackwell format. So fp8 + the AppleSilicon-FP8 node is the only path that runs on Apple Silicon; there is no bf16 build to fall back to.\n\n**Measured memory:** on a 48 GB M-series with `--lowvram --disable-smart-memory` and models on an external SSD, peak was about **41 GB**, including about **14 GB** of macOS/app baseline. Ideogram 4 itself was roughly **27 GB at about 2 MP**.\n\n**Measured speed:** cost scales linearly with pixels at roughly **11.2 s/it per megapixel**. 1024x1024 is approximately 13 s/it, and 1088x1920 is approximately 26 s/it. V4_DEFAULT_20 at 1024x1024 takes about 4-5 minutes, plus a one-time model load of about 1-2 minutes.\n\n**MPS batch rule:** batch_size must stay **1**. Higher and only the first image denoises; the rest come out as static. Queue many separate jobs instead.\n\n**LoRA rule:** never set a LoRA to strength 0.0 on MPS; it NaNs to a pure black image. Bypass the node with **Ctrl+B** instead.\n\n**Prompt grammar:** the prompt must be a **JSON caption**, not prose. Ideogram 4 is out-of-distribution on plain text: worse output AND false-positive refusals (the model draws a flat gray blocked card). See **CAPTIONS.md** in the repo for the full grammar."
+      ],
+      "title": "Recipe & Mac gotchas",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 1,
+      "type": "UNETLoader",
+      "pos": [
+        20,
+        100
+      ],
+      "size": [
+        340,
+        82
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            1
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "widgets_values": [
+        "ideogram4_fp8_scaled.safetensors",
+        "default"
+      ],
+      "title": "UNet \u2014 conditional",
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 2,
+      "type": "UNETLoader",
+      "pos": [
+        20,
+        240
+      ],
+      "size": [
+        340,
+        82
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            5
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "widgets_values": [
+        "ideogram4_unconditional_fp8_scaled.safetensors",
+        "default"
+      ],
+      "title": "UNet \u2014 UNconditional (Ideogram does CFG with 2 models)",
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 3,
+      "type": "CLIPLoader",
+      "pos": [
+        20,
+        380
+      ],
+      "size": [
+        340,
+        106
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "name": "device",
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            6
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen3vl_8b_fp8_scaled.safetensors",
+        "ideogram4",
+        "default"
+      ],
+      "title": "Text encoder \u2014 type MUST be ideogram4",
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 14,
+      "type": "VAELoader",
+      "pos": [
+        20,
+        540
+      ],
+      "size": [
+        340,
+        58
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            16
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "flux2-vae.safetensors"
+      ],
+      "title": "Flux 2 VAE",
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 5,
+      "type": "CFGOverride",
+      "pos": [
+        440,
+        220
+      ],
+      "size": [
+        340,
+        106
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        },
+        {
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            4
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CFGOverride"
+      },
+      "widgets_values": [
+        3.0,
+        0.7,
+        1.0
+      ],
+      "title": "CFGOverride \u2014 3.0 from 0.7 to 1.0",
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 6,
+      "type": "CLIPTextEncode",
+      "pos": [
+        840,
+        100
+      ],
+      "size": [
+        420,
+        280
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 6
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            7,
+            8
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "{\"high_level_description\": \"A mid-century screen-printed travel poster of a red cable car crossing above jagged limestone peaks at sunrise, with the destination name set large across the lower third.\", \"style_description\": {\"aesthetics\": \"mid-century modern travel poster design, flat geometric shapes, clean hard-edged colour separations, generous negative space\", \"lighting\": \"low sunrise light raking across the peaks, long flat shadows rendered as solid shapes\", \"medium\": \"vintage screen print on textured poster paper, visible halftone grain, slight ink misregistration\", \"art_style\": \"1950s Alpine railway tourism poster, limited spot-colour palette, strong graphic silhouettes\", \"color_palette\": [\"#E8DCC4\", \"#D94F30\", \"#2B4C6F\", \"#8FB0C4\", \"#1A1A18\"]}, \"compositional_deconstruction\": {\"background\": \"a graduated sunrise sky in flat bands of pale cream and dusty rose behind layered mountain silhouettes in deep blue and slate, no watermark\", \"elements\": [{\"type\": \"obj\", \"bbox\": [180, 60, 620, 940], \"desc\": \"three angular limestone peaks in flat layered silhouette, a thin steel cable strung across the frame with a small red enclosed cable car hanging from it\"}, {\"type\": \"text\", \"bbox\": [650, 90, 790, 910], \"text\": \"DOLOMITI\", \"desc\": \"the single hero word in a heavy condensed geometric sans serif, all capitals, tightly letterspaced, deep blue ink, centred across the full width\"}, {\"type\": \"text\", \"bbox\": [800, 150, 850, 850], \"text\": \"ALTA BADIA \u00b7 SUDTIROL\", \"desc\": \"a thin all-capitals line in a light geometric sans, widely letterspaced, burnt orange ink, centred directly beneath the hero word\"}, {\"type\": \"text\", \"bbox\": [890, 300, 930, 700], \"text\": \"FUNIVIA DAL 1947\", \"desc\": \"very small all-capitals text in a light sans, widely letterspaced, dark slate ink, centred\"}]}}"
+      ],
+      "title": "Prompt \u2014 JSON caption required (see README.md)",
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 7,
+      "type": "ConditioningZeroOut",
+      "pos": [
+        840,
+        440
+      ],
+      "size": [
+        420,
+        58
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            9
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ConditioningZeroOut"
+      },
+      "widgets_values": [],
+      "title": "Negative = zeroed positive (do not edit)",
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 8,
+      "type": "DualModelGuider",
+      "pos": [
+        1340,
+        100
+      ],
+      "size": [
+        380,
+        118
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 4
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 8
+        },
+        {
+          "name": "model_negative",
+          "type": "MODEL",
+          "link": 5,
+          "shape": 7
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 9,
+          "shape": 7
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            11
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DualModelGuider"
+      },
+      "widgets_values": [
+        7.0
+      ],
+      "title": "Dual-model CFG \u2014 7.0",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 9,
+      "type": "RandomNoise",
+      "pos": [
+        1340,
+        280
+      ],
+      "size": [
+        380,
+        82
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "widget": {
+            "name": "noise_seed"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            10
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise"
+      },
+      "widgets_values": [
+        42,
+        "fixed"
+      ],
+      "title": "Seed \u2014 fixed",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 10,
+      "type": "KSamplerSelect",
+      "pos": [
+        1340,
+        420
+      ],
+      "size": [
+        380,
+        58
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            12
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect"
+      },
+      "widgets_values": [
+        "euler"
+      ],
+      "title": "Sampler algorithm \u2014 euler",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 11,
+      "type": "Ideogram4Scheduler",
+      "pos": [
+        1340,
+        540
+      ],
+      "size": [
+        380,
+        154
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": null
+        },
+        {
+          "name": "mu",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mu"
+          },
+          "link": null
+        },
+        {
+          "name": "std",
+          "type": "FLOAT",
+          "widget": {
+            "name": "std"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            13
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Ideogram4Scheduler"
+      },
+      "widgets_values": [
+        20,
+        1088,
+        1920,
+        0.0,
+        1.75
+      ],
+      "title": "Ideogram4Scheduler \u2014 V4_DEFAULT_20",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 12,
+      "type": "EmptyFlux2LatentImage",
+      "pos": [
+        1340,
+        700
+      ],
+      "size": [
+        380,
+        106
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": null
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": null
+        },
+        {
+          "name": "batch_size",
+          "type": "INT",
+          "widget": {
+            "name": "batch_size"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            14
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyFlux2LatentImage"
+      },
+      "widgets_values": [
+        1088,
+        1920,
+        1
+      ],
+      "title": "1024x1024 latent \u2014 batch_size MUST stay 1",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 13,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        1800,
+        100
+      ],
+      "size": [
+        400,
+        130
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 10
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 11
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 12
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 13
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            15
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": [],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced"
+      },
+      "widgets_values": [],
+      "title": "Sampler \u2014 20 steps \u00b7 euler/Ideogram4Scheduler",
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 15,
+      "type": "VAEDecode",
+      "pos": [
+        1800,
+        300
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 15
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            17
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": [],
+      "title": "Decode",
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 16,
+      "type": "SaveImage",
+      "pos": [
+        1800,
+        420
+      ],
+      "size": [
+        400,
+        300
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 17
+        },
+        {
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "ideogram4/img"
+      ],
+      "title": "Save \u2014 ideogram4/img",
+      "color": "#222",
+      "bgcolor": "#000"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      5,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      5,
+      0,
+      8,
+      0,
+      "MODEL"
+    ],
+    [
+      5,
+      2,
+      0,
+      8,
+      2,
+      "MODEL"
+    ],
+    [
+      6,
+      3,
+      0,
+      6,
+      0,
+      "CLIP"
+    ],
+    [
+      7,
+      6,
+      0,
+      7,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      8,
+      6,
+      0,
+      8,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      9,
+      7,
+      0,
+      8,
+      3,
+      "CONDITIONING"
+    ],
+    [
+      10,
+      9,
+      0,
+      13,
+      0,
+      "NOISE"
+    ],
+    [
+      11,
+      8,
+      0,
+      13,
+      1,
+      "GUIDER"
+    ],
+    [
+      12,
+      10,
+      0,
+      13,
+      2,
+      "SAMPLER"
+    ],
+    [
+      13,
+      11,
+      0,
+      13,
+      3,
+      "SIGMAS"
+    ],
+    [
+      14,
+      12,
+      0,
+      13,
+      4,
+      "LATENT"
+    ],
+    [
+      15,
+      13,
+      0,
+      15,
+      0,
+      "LATENT"
+    ],
+    [
+      16,
+      14,
+      0,
+      15,
+      1,
+      "VAE"
+    ],
+    [
+      17,
+      15,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Models",
+      "bounding": [
+        0,
+        40,
+        380,
+        600
+      ],
+      "color": "#3f5159",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Ideogram model recipe",
+      "bounding": [
+        420,
+        40,
+        380,
+        330
+      ],
+      "color": "#59343f",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "JSON prompt & conditioning",
+      "bounding": [
+        820,
+        40,
+        460,
+        500
+      ],
+      "color": "#3f5159",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "Sampling controls",
+      "bounding": [
+        1320,
+        40,
+        420,
+        810
+      ],
+      "color": "#3f5159",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "Sample, decode & save",
+      "bounding": [
+        1780,
+        40,
+        440,
+        720
+      ],
+      "color": "#3f5159",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
