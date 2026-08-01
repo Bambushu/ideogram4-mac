@@ -11,6 +11,24 @@ subjects.
 Send it JSON instead and the same idea renders better, follows layout instructions, and stops
 refusing things it has no business refusing.
 
+## You can draw this instead of typing it
+
+Everything below describes the format by hand, which is worth understanding. But
+`Ideogram4_Mac_PromptBuilder.json` in this repo does the fiddly part for you: drag regions on a
+canvas, mark each one `obj` or `text`, and it emits the caption. It owns the bbox convention, which
+is the bit most likely to go quietly wrong.
+
+One thing to know if you build on that node yourself: its `elements_data` widget is owned by the
+canvas editor, which rebuilds it from its own region list every time the graph loads. Writing
+regions into that widget by hand looks like it works, because the value persists in the saved JSON,
+and then it is discarded at runtime and you get a caption with no elements. The supported way to
+pre-populate it is the `import_json` input with `import_mode: "when empty"`, which seeds the canvas
+on first load and then hands control to the editor once you draw. That is how the shipped workflow
+does it.
+
+A caption with a style block and a background but **no elements** is sparse enough to draw a refusal
+card, which is exactly what that mistake produces.
+
 ## The shape
 
 Exactly these top level keys, in this order. Order matters, because it is part of what the model was

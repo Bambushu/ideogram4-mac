@@ -34,19 +34,42 @@ What it does not give you:
 - There is no seed scan variant. Ideogram 4 on a Mac is minutes per image, so scanning cheaply
   before committing matters more here than it does on a 4090.
 
-## The two workflows
+## The workflows
 
-| File | What it is for |
-|---|---|
-| `Ideogram4_Mac.json` | Single render, **V4_DEFAULT_20** at 1088x1920, about 8 minutes. |
-| `Ideogram4_Mac_Seedhunt.json` | Seed scan, **V4_TURBO_12** at the same 1088x1920, about 5 minutes each. Seed is set to `increment`, so you set a batch count in the queue and walk away. |
+| File | What it is for | Needs |
+|---|---|---|
+| `Ideogram4_Mac.json` | Single render, **V4_DEFAULT_20** at 1088x1920, about 8 minutes. | core nodes only |
+| `Ideogram4_Mac_PromptBuilder.json` | Same recipe, but you **draw the layout** instead of hand writing bboxes. | + [KJNodes](https://github.com/kijai/ComfyUI-KJNodes) |
+| `Ideogram4_Mac_Seedhunt.json` | Seed scan at **V4_TURBO_12**, seed set to `increment`. Mainly useful for escaping refusals. | core nodes only |
 
-Both ship with the caption that produced the Dolomiti poster above, so queueing either one
-unmodified reproduces a known good result before you start changing things. Drop both to 1024x1024
-if you want roughly half the render time.
+All three ship with the caption that produced the Dolomiti poster above, so queueing any of them
+unmodified reproduces a known good result before you start changing things. Drop the resolution to
+1024x1024 if you want roughly half the render time.
 
-Both also carry two in graph panels, one with model downloads and install paths and one with the
+Each carries two in graph panels, one with model downloads and install paths and one with the
 recipe and the Mac gotchas, so you do not need this README open while you work.
+
+### Which one to reach for
+
+**Start with the prompt builder if you are doing layout work**, which is most of what this model is
+good for. It uses `Ideogram4PromptBuilderKJ` from KJNodes: you drag regions on a canvas, mark each
+one as `obj` or `text`, and it assembles the JSON caption for you. That removes the single most
+error prone part of the format, since it owns the `[ymin, xmin, ymax, xmax]` 0-1000 convention that
+is very easy to get backwards by hand. It can also use your last render as the canvas background, so
+you place the next layout on top of what you actually got.
+
+It also wires its `width` and `height` outputs into both `Ideogram4Scheduler` and the latent, so
+those two cannot drift apart. That is a real gotcha in the core-nodes-only graphs, where you have to
+remember to change both.
+
+The cost is one custom node. If you want a graph that runs on a stock ComfyUI with nothing extra
+installed, `Ideogram4_Mac.json` is that graph and always will be.
+
+**The seed hunt is narrower than it looks.** With most models you roll seeds to find a composition.
+Ideogram 4 inverts that: composition is declared in the caption's bboxes, so rolling seeds to
+discover a layout is fighting the model instead of using it. Where a seed ladder genuinely earns its
+place is escaping refusals, which is real and documented below. Reach for the builder to control
+layout, and the seed hunt when a caption refuses.
 
 ## The recipe (from ComfyUI's official template)
 
