@@ -1,9 +1,9 @@
 # Ideogram 4 on Apple Silicon (ComfyUI / MPS)
 
 Running [Ideogram 4](https://huggingface.co/Comfy-Org/Ideogram-4), the 9.3B open weights DiT,
-locally on a Mac. Two flat readable workflows built entirely from core nodes on Ideogram's official
-recipe, every Apple Silicon requirement and measurement I hit getting there, and a proper writeup of
-the JSON caption grammar the model actually wants.
+locally on a Mac. Two flat readable workflows on Ideogram's official recipe, one of them pure core
+nodes and one that lets you draw the layout, every Apple Silicon requirement and measurement I hit
+getting there, and a proper writeup of the JSON caption grammar the model actually wants.
 
 Ideogram 4's standout capability among locally runnable models is typography: exact strings, several
 text blocks at once, small print that stays legible, and bbox level control over placement. Every
@@ -31,8 +31,8 @@ What it does not give you:
 - It says nothing about Apple Silicon. Which checkpoint works, what it costs per step, what it peaks
   at in memory, why one of the three quantisations is a non starter: all of that is below, measured
   on a real machine.
-- There is no seed scan variant. Ideogram 4 on a Mac is minutes per image, so scanning cheaply
-  before committing matters more here than it does on a 4090.
+- There is no visual way to place your layout. Ideogram 4's whole strength is putting exact text in
+  exact places, and the official template still has you typing bbox integers by hand.
 
 ## The workflows
 
@@ -40,9 +40,8 @@ What it does not give you:
 |---|---|---|
 | `Ideogram4_Mac.json` | Single render, **V4_DEFAULT_20** at 1088x1920, about 8 minutes. | core nodes only |
 | `Ideogram4_Mac_PromptBuilder.json` | Same recipe, but you **draw the layout** instead of hand writing bboxes. | + [KJNodes](https://github.com/kijai/ComfyUI-KJNodes) |
-| `Ideogram4_Mac_Seedhunt.json` | Seed scan at **V4_TURBO_12**, seed set to `increment`. Mainly useful for escaping refusals. | core nodes only |
 
-All three ship with the caption that produced the Dolomiti poster above, so queueing any of them
+Both ship with the caption that produced the Dolomiti poster above, so queueing any of them
 unmodified reproduces a known good result before you start changing things. Drop the resolution to
 1024x1024 if you want roughly half the render time.
 
@@ -59,17 +58,17 @@ is very easy to get backwards by hand. It can also use your last render as the c
 you place the next layout on top of what you actually got.
 
 It also wires its `width` and `height` outputs into both `Ideogram4Scheduler` and the latent, so
-those two cannot drift apart. That is a real gotcha in the core-nodes-only graphs, where you have to
+those two cannot drift apart. That is a real gotcha in the core-nodes-only graph, where you have to
 remember to change both.
 
 The cost is one custom node. If you want a graph that runs on a stock ComfyUI with nothing extra
 installed, `Ideogram4_Mac.json` is that graph and always will be.
 
-**The seed hunt is narrower than it looks.** With most models you roll seeds to find a composition.
-Ideogram 4 inverts that: composition is declared in the caption's bboxes, so rolling seeds to
-discover a layout is fighting the model instead of using it. Where a seed ladder genuinely earns its
-place is escaping refusals, which is real and documented below. Reach for the builder to control
-layout, and the seed hunt when a caption refuses.
+**A note on seed hunting, since it is the reflex from other models.** With most models you roll
+seeds to find a composition. Ideogram 4 inverts that: composition is declared in the caption's
+bboxes, so rolling seeds to discover a layout is fighting the model instead of using it. Change the
+caption, not the seed. Where a seed ladder does still earn its place is escaping refusals, and for
+that you just set the seed widget to `increment` and queue a few.
 
 ## The recipe (from ComfyUI's official template)
 
@@ -96,8 +95,7 @@ Official presets, embedded in the template:
 Ideogram's own docs call Quality 48 the default. On a Mac that is a long wait, so these workflows
 ship Default 20 and Turbo 12 as the practical tiers. Go to Quality 48 for a keeper.
 
-**Presets seem to preserve composition at a fixed seed, which is what makes the seedhunt workflow
-worth having.** Turbo and Default use different `mu` (0.5 against 0.0), yet in the A/B I ran (the
+**Presets seem to preserve composition at a fixed seed.** Turbo and Default use different `mu` (0.5 against 0.0), yet in the A/B I ran (the
 Dolomiti poster, seed 42, 1088x1920) they produced the same layout, with Default 20 differing only
 in refinement: cleaner letterforms and paper grain. So the intended loop is to scan cheaply at
 Turbo 12, then re render the seed you liked at Default 20 or Quality 48.
@@ -200,7 +198,7 @@ leave ComfyUI warm, and paid on every render under `--disable-smart-memory`, whi
 hunt.
 
 Be honest with yourself about the loop. This is a minutes per image model on a Mac. Scan
-compositions with the seedhunt workflow, then spend Quality 48 only on a seed you already want.
+compositions at Turbo 12, then spend Quality 48 only on a seed you already want.
 
 **Memory is the tight part.** Across a 14 render batch at 1088x1920 with `--lowvram`, peak device
 memory ranged from 36.8 to 44.4 GB out of 48, including a baseline of roughly 14 GB from macOS and
@@ -223,7 +221,7 @@ DiT in ComfyUI on a Mac.
 
 1. **`batch_size` must stay 1.** The batch dimension inside one render is what breaks on MPS. Set it
    to 4 and only one frame denoises while the rest come out static. Queuing many separate jobs is
-   fine, and that is exactly what the seedhunt workflow does with `increment`. Loop seeds, do not
+   fine: set the seed widget to `increment` and raise the queue batch count. Loop seeds, do not
    batch.
 2. **Never set a LoRA to strength 0.0. Bypass the node instead.** A zeroed patch is not a no op on
    MPS. It NaNs the model to pure black. Right click, Bypass, or Ctrl+B.
@@ -243,8 +241,8 @@ refusals, with no error to tell you. Paste a JSON caption into `CLIPTextEncode` 
 JSON string is the prompt, and no special node is needed.
 
 Refusals are trained into the model, so it renders a flat grey card rather than failing. If a
-caption refuses on some seeds, a seed ladder rescues it, and that is what the seedhunt workflow is
-for. If it refuses on every seed, reword it, because replacing vague filler with concrete
+caption refuses on some seeds, a seed ladder rescues it: set the seed widget to `increment` and
+queue a few. If it refuses on every seed, reword it, because replacing vague filler with concrete
 description fixes most cases.
 
 ## Credits

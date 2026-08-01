@@ -185,7 +185,7 @@ with low saturation and low variance, where a real flat colour design still has 
 Recovery depends on how deep the refusal basin is:
 
 - Refuses on some seeds: run a seed ladder. Most captions escape within a handful of seeds. This is
-  exactly what the seedhunt workflow is for.
+  set the seed widget to `increment` and queue a few.
 - Refuses on every seed: reword the caption. Make the vague parts concrete, which alone rescues most
   of them.
 
